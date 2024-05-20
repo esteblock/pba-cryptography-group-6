@@ -2,6 +2,19 @@ use hex;
 use hex::FromHex;
 use std::cmp;
 
+// We start with a function that can do XOR between two array of bytes
+fn xor_bytes(string_0_bytes: &[u8], string_1_bytes: &[u8])-> Vec<u8> {
+   // It will just take the minimal length.
+    let min_length = cmp::min(string_0_bytes.len(), string_1_bytes.len());
+
+        let string_0_bytes_sub = &string_0_bytes[..min_length];
+        let string_1_bytes_sub = &string_1_bytes[..min_length];
+
+        // now we do the XTOR and recover an array
+        let xor_result_bytes : Vec<_> = string_0_bytes_sub.iter().zip(string_1_bytes_sub.iter()).map(|(&b, &v)| b ^ v).collect();
+        xor_result_bytes
+}
+
 fn main() {
 
     let message_0 = "050602061d07035f4e3553501400004c1e4f1f01451359540c5804110c1c47560a1415491b06454f0e45040816431b144f0f4900450d1501094c1b16550f0b4e151e03031b450b4e020c1a124f020a0a4d09071f16003a0e5011114501494e16551049021011114c291236520108541801174b03411e1d124554284e141a0a1804045241190d543c00075453020a044e134f540a174f1d080444084e01491a090b0a1b4103570740";
@@ -13,79 +26,52 @@ fn main() {
     let message_6 = "160111433b00035f536110435a380402561240555c526e1c0e431300091e4f04451d1d490d1c49010d000a0a4510111100000d434202081f0755034f13031600030d0204040e";
     let message_7 = "0c06004316061b48002a4509065e45221654501c0a075f540c42190b165c";
 
-let cypher_decoded_bytes_vec = vec![
-    Vec::from_hex(message_0).unwrap(),
-    Vec::from_hex(message_1).unwrap(),
-    Vec::from_hex(message_2).unwrap(),
-    Vec::from_hex(message_3).unwrap(),
-    Vec::from_hex(message_4).unwrap(),
-    Vec::from_hex(message_5).unwrap(),
-    Vec::from_hex(message_6).unwrap(),
-    Vec::from_hex(message_7).unwrap()];
+    let cypher_vec = vec![
+        message_0,
+        message_1,
+        message_2,
+        message_3,
+        message_4,
+        message_5,
+        message_6,
+        message_7];
 
+    let common_words = vec![
+        "the"
+    ];
 
-let cypher_vec = vec![
-    message_0,
-    message_1,
-    message_2,
-    message_3,
-    message_4,
-    message_5,
-    message_6,
-    message_7];
+    let cypher_decoded_bytes_vec = vec![
+        message_0.as_bytes(),
+        message_1.as_bytes(),
+        message_2.as_bytes(),
+        message_3.as_bytes(),
+        message_4.as_bytes(),
+        message_5.as_bytes(),
+        message_6.as_bytes(),
+        message_7.as_bytes()];
 
+    // We will do the same for all C1xC2 XOR combinations
+    for m in 0..cypher_decoded_bytes_vec.len()-1 {
+        for n in m+1..cypher_decoded_bytes_vec.len() {
+            let cypher_0 = cypher_decoded_bytes_vec[m];
+            let cypher_1 = cypher_decoded_bytes_vec[n];
+            
+            let cypher_xor = xor_bytes(&cypher_0,&cypher_1);
+            let common_word_bytes= "hello".as_bytes();
 
-    // let cypher_decoded_bytes_vec = vec![
-    //     message_0.as_bytes(),
-    //     message_1.as_bytes(),
-    //     message_2.as_bytes(),
-    //     message_3.as_bytes(),
-    //     message_4.as_bytes(),
-    //     message_5.as_bytes(),
-    //     message_6.as_bytes(),
-    //     message_7.as_bytes()];
+            // However we need to xor for every position
+            for i in 0..cypher_xor.len()-common_word_bytes.len() {
+                let xor_xor_common_word =  xor_bytes(&cypher_xor[i..],&common_word_bytes);
+                let xor_xor_common_word_string = String::from_utf8(xor_xor_common_word).unwrap();
+                println!("m {:?}", m);
+                println!("n {:?}", n);
+                println!("i {:?}", i);
+                println!("xor_xor_common_word_string result {:?}", xor_xor_common_word_string);
 
-        
-for n in 0..cypher_vec.len()-1 {
-    for m in n+1..cypher_vec.len() {
-        let cypher_0 = cypher_vec[n];
-        let cypher_1 = cypher_vec[m];
+            }
 
-        
-        println!("xor result {:?}", xor_strings(cypher_0,cypher_1));
+        } 
+    }
 
-        // for i in 0..cypher_decoded_bytes_vec[m].len() {
-        //     let xor_result = cypher_decoded_bytes_vec[n][i] ^ cypher_decoded_bytes_vec[m][i];
-        //     // if xor_result == 0 {
-        //     //     // let character = cypher_decoded_bytes_vec[n][i]::
-        //     //     println!("n {}", n);
-        //     //     println!("m {}", m);
-        //     //     println!("i {}", i);
-        //     //     // println!("xor result {:?}", cypher_decoded_bytes_vec[n][i] as char);
-        //     //     // println!("xor result {:?}", cypher_decoded_bytes_vec[m][i] as char);
-
-        //     //     // println!("xor result {:?}", String::from_utf8(vec![cypher_decoded_bytes_vec[n][m]]));
-        //     //     println!("____");
-
-        //     // }
-        // }
-}    }
-
-let  a =  &message_2.as_bytes()[0] ^ message_3.as_bytes()[0];
-// println!("message as bytes {    }", message_2.as_bytes()[0]);
-println!("decode {:?}", hex::decode(message_0).unwrap()[0] ^ hex::decode(message_0).unwrap()[0])
 }
 
-fn xor_strings(string_0: &str, string_1: &str)-> String {
-    let string_0_bytes = Vec::from_hex(string_0).unwrap();
-    let string_1_bytes = Vec::from_hex(string_1).unwrap();
-    let min_length = cmp::min(string_0_bytes.len(), string_1_bytes.len());
-
-        let string_0_bytes_sub = &string_0_bytes[..min_length];
-        let string_1_bytes_sub = &string_1_bytes[..min_length];
-
-        // now we do the XTOR and recover an array
-
-        let xor_result_bytes : Vec<_> = string_0_bytes_sub.iter().zip(string_1_bytes_sub.iter()).map(|(&b, &v)| b ^ v).collect();
-        String::from_utf8(xor_result_bytes).unwrap()
-}
